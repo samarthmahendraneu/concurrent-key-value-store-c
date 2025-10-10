@@ -1,0 +1,6 @@
+Name:
+NUID:
+slack days used: 0
+remaining slack days: 5
+Challenge I (optional): No
+Challenge II (optional): No
