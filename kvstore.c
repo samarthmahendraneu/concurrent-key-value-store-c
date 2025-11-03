@@ -5,6 +5,9 @@
 // TODO: define your synchronization variables here
 // (hint: don't forget to initialize them)
 
+// Monitor: mutex to protect key-value store
+static pthread_mutex_t kvstore_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 
 
 /* read a key from the key-value store.
@@ -16,8 +19,24 @@
 char* kv_read(kvstore_t *kv, char *key) {
     /* TODO: your code here */
 
-    printf("[INFO] read key[%s]\n", key);
-    return NULL;
+    // Monitor entry - acquire lock
+    pthread_mutex_lock(&kvstore_mutex);
+
+    char *result = NULL;
+
+    // Search for the key
+    for (int i = 0; i < TABLE_MAX; i++) {
+        if (kv->keys[i].stat == 1 && strcmp(kv->keys[i].key, key) == 0) {
+            // Key found
+            result = kv->values[i];
+            break;
+        }
+    }
+
+    // Monitor exit - release lock
+    pthread_mutex_unlock(&kvstore_mutex);
+
+    return result;
 }
 
 
@@ -42,8 +61,56 @@ char* kv_read(kvstore_t *kv, char *key) {
 int kv_write(kvstore_t *kv, char *key, char *val) {
     /* TODO: your code here */
 
-    printf("[INFO] write key[%s]=val[%s]\n", key, val);
-    return 0;
+    // Monitor entry - acquire lock
+    pthread_mutex_lock(&kvstore_mutex);
+
+    int result = 0;
+    int key_index = -1;
+    int free_index = -1;
+
+    // Search for existing key or find a free slot
+    for (int i = 0; i < TABLE_MAX; i++) {
+        if (kv->keys[i].stat == 1 && strcmp(kv->keys[i].key, key) == 0) {
+            // Key already exists
+            key_index = i;
+            break;
+        }
+        if (kv->keys[i].stat == 0 && free_index == -1) {
+            // Found a free slot
+            free_index = i;
+        }
+    }
+
+    if (key_index != -1) {
+        // Key exists - overwrite the value
+        // Free old value
+        free(kv->values[key_index]);
+
+        // Allocate and copy new value
+        int val_len = strlen(val);
+        kv->values[key_index] = (char*) malloc(val_len + 1);
+        strcpy(kv->values[key_index], val);
+
+        result = 0; // Success
+    } else if (free_index != -1) {
+        // Key doesn't exist - insert new key-value pair
+        kv->keys[free_index].stat = 1;
+        strcpy(kv->keys[free_index].key, key);
+
+        int val_len = strlen(val);
+        kv->values[free_index] = (char*) malloc(val_len + 1);
+        strcpy(kv->values[free_index], val);
+
+        result = 0; // Success
+    } else {
+        // No free slot - table is full
+        result = 1; // Failure
+    }
+
+    // Monitor exit - release lock
+    pthread_mutex_unlock(&kvstore_mutex);
+
+    return result;
 }
 
 
@@ -57,7 +124,22 @@ int kv_write(kvstore_t *kv, char *key, char *val) {
 void kv_delete(kvstore_t *kv, char *key) {
     /* TODO: your code here */
 
-    printf("[INFO] delete key[%s]\n", key);
+    // Monitor entry - acquire lock
+    pthread_mutex_lock(&kvstore_mutex);
+
+    // Search for the key
+    for (int i = 0; i < TABLE_MAX; i++) {
+        if (kv->keys[i].stat == 1 && strcmp(kv->keys[i].key, key) == 0) {
+            // Key found - delete it
+            kv->keys[i].stat = 0; // Mark as FREE
+            free(kv->values[i]);
+            kv->values[i] = NULL;
+            break;
+        }
+    }
+
+    // Monitor exit - release lock
+    pthread_mutex_unlock(&kvstore_mutex);
 }
 
 
@@ -66,5 +148,21 @@ void kv_delete(kvstore_t *kv, char *key) {
 void kv_dump(kvstore_t *kv) {
     /* TODO: your code here */
 
-    printf("[INFO] dump key-value store\n");
+    // Monitor entry - acquire lock
+    pthread_mutex_lock(&kvstore_mutex);
+
+    printf("=== Key-Value Store Dump ===\n");
+    int count = 0;
+    for (int i = 0; i < TABLE_MAX; i++) {
+        if (kv->keys[i].stat == 1) {
+            printf("[%d] key=\"%s\" => value=\"%s\"\n",
+                   i, kv->keys[i].key, kv->values[i]);
+            count++;
+        }
+    }
+    printf("Total entries: %d\n", count);
+    printf("============================\n");
+
+    // Monitor exit - release lock
+    pthread_mutex_unlock(&kvstore_mutex);
 }
