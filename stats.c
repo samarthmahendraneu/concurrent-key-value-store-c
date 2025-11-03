@@ -17,39 +17,62 @@ int n_fails = 0;   // number of failed operations
 
 /* your code here */
 
+// Monitor: mutex to protect statistics
+static pthread_mutex_t stats_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 
 // FIXME: implementation below is not thread-safe.
 // Fix this by implementing a Monitor.
 
 void inc_write() {
+    pthread_mutex_lock(&stats_mutex);
     n_writes++;
+    pthread_mutex_unlock(&stats_mutex);
 }
 
 void inc_read() {
+    pthread_mutex_lock(&stats_mutex);
     n_reads++;
+    pthread_mutex_unlock(&stats_mutex);
 }
 
 void inc_delete() {
+    pthread_mutex_lock(&stats_mutex);
     n_deletes++;
+    pthread_mutex_unlock(&stats_mutex);
 }
 
 void inc_fail() {
+    pthread_mutex_lock(&stats_mutex);
     n_fails++;
+    pthread_mutex_unlock(&stats_mutex);
 }
 
 
 int get_writes() {
-    return n_writes;
+    pthread_mutex_lock(&stats_mutex);
+    int val = n_writes;
+    pthread_mutex_unlock(&stats_mutex);
+    return val;
 }
 
 int get_reads() {
-    return n_reads;
+    pthread_mutex_lock(&stats_mutex);
+    int val = n_reads;
+    pthread_mutex_unlock(&stats_mutex);
+    return val;
 }
 
 int get_deletes() {
-    return n_deletes;
+    pthread_mutex_lock(&stats_mutex);
+    int val = n_deletes;
+    pthread_mutex_unlock(&stats_mutex);
+    return val;
 }
 
 int get_fails() {
-    return n_fails;
+    pthread_mutex_lock(&stats_mutex);
+    int val = n_fails;
+    pthread_mutex_unlock(&stats_mutex);
+    return val;
 }
