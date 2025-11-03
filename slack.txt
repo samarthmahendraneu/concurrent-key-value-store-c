@@ -1,6 +1,7 @@
-Name:
-NUID:
-slack days used: 0
-remaining slack days: 5
+Name: Marasanige Samarth Mahendra
+NUID: 002812936
+slack days used: 1
+remaining slack days: 4
 Challenge I (optional): No
 Challenge II (optional): No
+
