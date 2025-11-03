@@ -1,6 +1,16 @@
 LDLIBS=-lz -lpthread
 CFLAGS=-ggdb3 -Wall
 
+# Add argp-standalone support for macOS
+UNAME := $(shell uname)
+ifeq ($(UNAME), Darwin)
+    ARGP_PREFIX := $(shell brew --prefix argp-standalone 2>/dev/null)
+    ifneq ($(ARGP_PREFIX),)
+        CFLAGS += -I$(ARGP_PREFIX)/include
+        LDLIBS += -L$(ARGP_PREFIX)/lib -largp
+    endif
+endif
+
 EXES = dbserver dbclient
 
 all: $(EXES)

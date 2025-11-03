@@ -140,6 +140,16 @@ int main(int argc, char **argv)
 
     /* TODO: your code here */
 
+    // Create listener thread
+    pthread_t listener;
+    pthread_create(&listener, NULL, listen_thread, NULL);
+
+    // Create worker threads
+    pthread_t workers[num_thread];
+    for (int i = 0; i < num_thread; i++) {
+        pthread_create(&workers[i], NULL, worker, &args);
+    }
+
 
 
 
